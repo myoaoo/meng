@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>梦境查询工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #932727;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .search-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .search-box {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        #keyword {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #C16743;
+            border-radius: 5px 0 0 5px;
+            background-color: #ffd59e;
+        }
+        #search-btn {
+            padding: 12px 20px;
+            background-color: #C16743;
+            color: white;
+            border: none;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        #search-btn:hover {
+            background-color: #a55638;
+        }
+        .results-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .result-item {
+            background-color: #FFEFD8;
+            border: 1px solid #D5987D;
+            border-radius: 5px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s;
+        }
+        .result-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .image-container {
+            width: 100%;
+            height: 180px;
+            overflow: hidden;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fff;
+        }
+        .image-preview {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 5px;
+        }
+        .result-header {
+            font-weight: bold;
+            font-size: 18px;
+            color: #5b3e3e;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .result-numbers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: auto;
+        }
+        .result-number {
+            background-color: #e53333;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            min-width: 60px;
+            text-align: center;
+        }
+        .loading {
+            text-align: center;
+            padding: 30px;
+            display: none;
+        }
+        .loading img {
+            width: 50px;
+        }
+        .error {
+            color: #d9534f;
+            padding: 15px;
+            background-color: #fdecea;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            color: #5b3e3e;
+            display: none;
+        }
+        .copyright {
+            text-align: center;
+            color: #C77654;
+            margin-top: 30px;
+            font-size: 14px;
+        }
+        @media (max-width: 600px) {
+            .results-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>梦境查询工具</h1>
+    
+    <div class="search-container">
+        <div class="search-box">
+            <input type="text" id="keyword" placeholder="输入您梦见什么了？例如：死人、蛇、水等" value="死人">
+            <button id="search-btn">解梦</button>
+        </div>
+        <p style="color: #5b3e3e; font-size: 14px;">数据源自《梦秘解图》，请输入您梦到的内容查询对应数字</p>
+    </div>
+    
+    <div id="loading" class="loading">
+        <img src="https://i.gifer.com/ZZ5H.gif" alt="加载中...">
+        <p>正在查询中，请稍候...</p>
+    </div>
+    
+    <div id="error" class="error"></div>
+    <div id="no-results" class="no-results">没有找到相关梦境结果</div>
+    
+    <div id="results" class="results-container"></div>
+    
+    <div class="copyright">
+        <p>数据源自《梦秘解图》，如有冒犯，请联系删除</p>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 页面加载后自动查询"死人"作为示例
+            document.getElementById('search-btn').click();
+        });
+
+        document.getElementById('search-btn').addEventListener('click', function() {
+            const keyword = document.getElementById('keyword').value.trim();
+            if (!keyword) {
+                showError('请输入梦境关键词');
+                return;
+            }
+            
+            // 显示加载中，隐藏其他区域
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('no-results').style.display = 'none';
+            document.getElementById('results').innerHTML = '';
+            
+            // 直接调用api.hixinlihn.com接口
+            fetch(`https://api.hixinlihn.com/search?keyword=${encodeURIComponent(keyword)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络响应不正常');
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    // 解析HTML获取结果
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const box2 = doc.querySelector('.box_2');
+                    
+                    // 隐藏加载中
+                    document.getElementById('loading').style.display = 'none';
+                    
+                    if (!box2) {
+                        document.getElementById('no-results').style.display = 'block';
+                        return;
+                    }
+                    
+                    const items = box2.querySelectorAll('.commodity_list li');
+                    if (items.length === 0) {
+                        document.getElementById('no-results').style.display = 'block';
+                        return;
+                    }
+                    
+                    // 显示结果
+                    displayResults(items);
+                })
+                .catch(error => {
+                    document.getElementById('loading').style.display = 'none';
+                    showError('查询失败: ' + error.message);
+                    console.error('Error:', error);
+                });
+        });
+        
+        function displayResults(items) {
+            const resultsContainer = document.getElementById('results');
+            let html = '';
+            
+            items.forEach(item => {
+                const keyword = item.querySelector('strong')?.textContent || '未知';
+                const imagePath = item.querySelector('img')?.getAttribute('src') || '/static/dream/dreamImg/default.jpg';
+                const numbers = Array.from(item.querySelectorAll('i')).map(el => el.textContent);
+                
+                // 处理图片路径
+                const imageUrl = imagePath.startsWith('http') ? imagePath : 
+                    `https://api.hixinlihn.com${imagePath}`;
+                
+                html += `
+                    <div class="result-item">
+                        <div class="image-container">
+                            <img src="${imageUrl}" class="image-preview" alt="${keyword}" onerror="this.src='https://api.hixinlihn.com/static/dream/dreamImg/default.jpg'">
+                        </div>
+                        <div class="result-header">${keyword}</div>
+                        <div class="result-numbers">
+                            ${numbers.map(num => `<div class="result-number">${num}</div>`).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsContainer.innerHTML = html;
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = message;
+        }
+        
+        // 支持按回车键搜索
+        document.getElementById('keyword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('search-btn').click();
+            }
+        });
+    </script>
+</body>
+</html>
