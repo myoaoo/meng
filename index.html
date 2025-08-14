@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -19,11 +18,11 @@
             text-align: center;
             margin-bottom: 30px;
         }
-.search-container {
-    background-color: #fff;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
+        .search-container {
+            background-color: #fff;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
         .search-box {
             display: flex;
         }
@@ -80,9 +79,9 @@
             background-color: #fff;
         }
         .image-preview {
-    width: 100%;
-    height: 100%;
-    object-fit: fill; 
+            width: 100%;
+            height: 100%;
+            object-fit: fill; 
             max-width: 100%;
             max-height: 100%;
             border-radius: 5px;
@@ -104,7 +103,7 @@
             padding: 2px 5px;
             border-radius: 4px;
             text-align: center;
-			    font-size: 0.9em;
+            font-size: 0.9em;
         }
         .loading {
             text-align: center;
@@ -134,9 +133,139 @@
             margin-top: 30px;
             font-size: 14px;
         }
+        /* 彩票手风琴样式 */
+        .caipiao-container {
+            background-color: #fff;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #D5987D;
+            overflow: hidden;
+        }
+        .caipiao-toggle {
+            background-color: #C16743;
+            color: white;
+            padding: 10px 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+        }
+        .caipiao-toggle:after {
+            content: '+';
+            transition: transform 0.3s;
+        }
+        .caipiao-toggle.active:after {
+            transform: rotate(45deg);
+        }
+        .caipiao-content {
+            padding: 0 15px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+        }
+        .caipiao-content.active {
+            padding: 15px;
+            max-height: 500px;
+            transition: max-height 0.5s ease-in, padding 0.3s ease-in;
+        }
+        .lottery-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #D5987D;
+        }
+        .lottery-btn {
+            background-color: #f0f0f0;
+            border: 1px solid #D5987D;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+        .lottery-btn.active {
+            background-color: #C16743;
+            color: white;
+            border-color: #C16743;
+        }
+        .lottery-btn:hover:not(.active) {
+            background-color: #ffd59e;
+        }
+        .caipiao {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+        .caipiao:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        .caipiao-title {
+            color: #932727;
+            font-weight: bold;
+            font-size: 14px;
+            min-width: 100px;
+        }
+        .caipiao-info {
+            color: #5b3e3e;
+            font-size: 13px;
+            margin-right: 10px;
+            white-space: nowrap;
+        }
+		.caipiao-one{
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+        .caipiao-numbers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 0;
+            flex: 1;
+            min-width: 200px;
+        }
+        .caipiao-number {
+            background-color: #e53333;
+            color: white;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .caipiao-special {
+            background-color: #4CAF50;
+        }
         @media (max-width: 600px) {
             .results-container {
-				 grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .lottery-btn {
+                font-size: 12px;
+                padding: 3px 6px;
+            }
+            .caipiao {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            .caipiao-title {
+                min-width: auto;
+            }
+            .caipiao-info {
+                margin-right: 5px;
             }
         }
     </style>
@@ -146,8 +275,20 @@
     
     <div class="search-container">
         <div class="search-box">
-            <input type="text" id="keyword" placeholder="输入您梦见什么了？例如：发财、升职、加薪等" value="发财">
+            <input type="text" id="keyword" placeholder="输入您梦见什么了？例如：发财、升职、加薪等">
             <button id="search-btn">解梦</button>
+        </div>
+    </div>
+    
+    <div class="caipiao-container">
+        <div class="caipiao-toggle">彩票开奖结果</div>
+        <div class="caipiao-content">
+            <div class="lottery-selector" id="lotterySelector">
+                <!-- 彩票类型按钮将在这里动态生成 -->
+            </div>
+            <div id="lotteryResults">
+                <!-- 彩票数据将在这里显示 -->
+            </div>
         </div>
     </div>
     
@@ -166,17 +307,95 @@
     </div>
     
     <script>
+        // 彩票类型映射
+        const lotteryNames = {
+            qxc: '7星彩',
+            pl5: '排列5',
+            pl3: '排列3',      
+            ssq: '双色球',
+            dlt: '大乐透',
+            fc3d: '福彩3D',
+            kl8: '快乐8',
+            qlc: '七乐彩',          
+            sfc: '胜负彩',
+            jqc: '进球彩',
+            bqc: '半全场'
+        };
+        
+        // 当前选中的彩票类型
+        let currentLotteryType = 'qxc';
+        // 搜索防抖计时器
+        let searchTimer = null;
+        // 避免重复搜索的标识
+        let lastSearchedKeyword = '';
+        
         document.addEventListener('DOMContentLoaded', function() {
-            // 页面加载后自动查询"恭喜发财"作为示例//《梦秘解图》
-            document.getElementById('search-btn').click();
+            // 初始化手风琴效果
+            initAccordion();
+            
+            // 生成彩票类型选择按钮
+            generateLotteryButtons();
+            
+            // 加载默认彩票数据
+            loadLotteryData(currentLotteryType);
+            
+            // 初始化输入框事件监听（实现自动搜索）
+            initAutoSearch();
         });
+
+        // 初始化手风琴折叠效果
+        function initAccordion() {
+            const toggle = document.querySelector('.caipiao-toggle');
+            const content = document.querySelector('.caipiao-content');
+            
+            // 默认折叠
+            toggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+                content.classList.toggle('active');
+            });
+        }
+        
+        // 初始化自动搜索功能
+        function initAutoSearch() {
+            const keywordInput = document.getElementById('keyword');
+            
+            // 监听输入事件
+            keywordInput.addEventListener('input', function() {
+                const keyword = this.value.trim();
+                
+                // 如果内容没变，不重复搜索
+                if (keyword === lastSearchedKeyword) return;
+                
+                // 清除之前的计时器
+                if (searchTimer) {
+                    clearTimeout(searchTimer);
+                }
+                
+                // 输入内容不为空时，延迟300ms执行搜索（防抖）
+                if (keyword) {
+                    searchTimer = setTimeout(() => {
+                        performSearch(keyword);
+                    }, 300);
+                } else {
+                    // 清空输入时，也清空结果
+                    clearResults();
+                }
+            });
+        }
 
         document.getElementById('search-btn').addEventListener('click', function() {
             const keyword = document.getElementById('keyword').value.trim();
-            if (!keyword) {
+            if (keyword) {
+                performSearch(keyword);
+            } else {
                 showError('请输入梦境关键词');
-                return;
             }
+        });
+        
+        // 执行搜索操作
+        function performSearch(keyword) {
+            // 记录最后搜索的关键词，避免重复搜索
+            lastSearchedKeyword = keyword;
             
             // 显示加载中，隐藏其他区域
             document.getElementById('loading').style.display = 'block';
@@ -184,7 +403,7 @@
             document.getElementById('no-results').style.display = 'none';
             document.getElementById('results').innerHTML = '';
             
-            // 直接调用api.hixinlihn.com接口
+            // 调用解梦接口
             fetch(`https://api.hixinlihn.com/search?keyword=${encodeURIComponent(keyword)}`)
                 .then(response => {
                     if (!response.ok) {
@@ -220,7 +439,156 @@
                     showError('查询失败: ' + error.message);
                     console.error('Error:', error);
                 });
-        });
+        }
+        
+        // 清空搜索结果
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('no-results').style.display = 'none';
+        }
+        
+        // 生成彩票类型选择按钮
+        function generateLotteryButtons() {
+            const selectorContainer = document.getElementById('lotterySelector');
+            selectorContainer.innerHTML = '';
+            
+            // 为每种彩票类型创建按钮
+            Object.keys(lotteryNames).forEach(type => {
+                const button = document.createElement('button');
+                button.className = `lottery-btn ${type === currentLotteryType ? 'active' : ''}`;
+                button.textContent = lotteryNames[type];
+                button.dataset.type = type;
+                
+                // 添加点击事件
+                button.addEventListener('click', function() {
+                    const selectedType = this.dataset.type;
+                    if (selectedType !== currentLotteryType) {
+                        currentLotteryType = selectedType;
+                        
+                        // 更新按钮状态
+                        document.querySelectorAll('.lottery-btn').forEach(btn => {
+                            btn.classList.remove('active');
+                        });
+                        this.classList.add('active');
+                        
+                        // 加载选中的彩票数据
+                        loadLotteryData(currentLotteryType);
+                    }
+                });
+                
+                selectorContainer.appendChild(button);
+            });
+        }
+        
+        // 加载彩票数据
+        function loadLotteryData(type) {
+            const resultsContainer = document.getElementById('lotteryResults');
+            resultsContainer.innerHTML = '<div class="loading" style="display:block"><img src="https://i.gifer.com/ZZ5H.gif" alt="加载中..."><p>正在加载彩票数据...</p></div>';
+            
+            fetch(`https://api.pearktrue.cn/api/lottery/?get=${type}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('彩票数据获取失败');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.code === 200 && data.data && data.data.length > 0) {
+                        // 最多显示5期数据
+                        const lotteriesToShow = data.data.slice(0, 5);
+                        displayLotteryData(lotteriesToShow, type);
+                        
+                        // 自动填充最新号码到搜索框（只取基本号码前4个，无空格）
+                        fillLatestNumbersToSearch(lotteriesToShow[0]);
+                    } else {
+                        resultsContainer.innerHTML = `<p>未获取到${lotteryNames[type]}的数据</p>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('彩票数据错误:', error);
+                    resultsContainer.innerHTML = `<p>${lotteryNames[type]}数据加载失败</p>`;
+                });
+        }
+        
+        // 将最新彩票的前4个基本号码填充到搜索框（无空格）
+        function fillLatestNumbersToSearch(latestLottery) {
+            if (!latestLottery || !latestLottery.drawnumber) return;
+            
+            // 拆分基本号码并过滤空值
+            const basicNumbers = latestLottery.drawnumber.split(' ').filter(num => num.trim() !== '');
+            
+            // 取前4个号码，如果不足4个则取全部
+            const firstFourNumbers = basicNumbers.slice(0, 4);
+            
+            // 拼接为无空格的字符串
+            const searchKeywords = firstFourNumbers.join('');
+            
+            // 设置到搜索框并触发搜索
+            const keywordInput = document.getElementById('keyword');
+            keywordInput.value = searchKeywords;
+            
+            // 触发自动搜索
+            if (searchKeywords) {
+                performSearch(searchKeywords);
+            }
+        }
+        
+        // 显示彩票数据
+        function displayLotteryData(lotteries, type) {
+            const resultsContainer = document.getElementById('lotteryResults');
+            resultsContainer.innerHTML = '';
+            
+            lotteries.forEach(lottery => {
+                // 拆分基本号码和特别号码
+                const basicNumbers = lottery.drawnumber ? lottery.drawnumber.split(' ') : [];
+                const specialNumber = lottery.trailnumber || '';
+                
+                // 创建每期彩票的容器
+                const caipiaoDiv = document.createElement('div');
+                caipiaoDiv.className = 'caipiao';
+                
+                // 构建HTML
+                let html = `
+                    <div class="caipiao-one"><div class="caipiao-title">${lottery.issue}期</div>
+                    <div class="caipiao-info">${formatDate(lottery.opentime)}</div>
+					<div class="caipiao-info">${lottery.salemoney}</div>
+					</div>
+                `;
+                
+
+                
+                html += `<div class="caipiao-numbers">`;
+                
+                // 添加基本号码
+                basicNumbers.forEach(num => {
+                    if (num) {
+                        html += `<div class="caipiao-number">${num}</div>`;
+                    }
+                });
+                
+                // 添加特别号码
+                if (specialNumber) {
+                    html += `<div class="caipiao-number caipiao-special">${specialNumber}</div>`;
+                }
+                
+                html += `</div>`;
+                
+                caipiaoDiv.innerHTML = html;
+                resultsContainer.appendChild(caipiaoDiv);
+            });
+        }
+        
+        // 格式化日期
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const parts = dateString.split(' ');
+            if (parts.length >= 2) {
+                const datePart = parts[0].split('-').slice(1).join('-');
+                return `${datePart} ${parts[1]}`;
+            }
+            return dateString;
+        }
         
         function displayResults(items) {
             const resultsContainer = document.getElementById('results');
@@ -260,7 +628,10 @@
         // 支持按回车键搜索
         document.getElementById('keyword').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                document.getElementById('search-btn').click();
+                const keyword = this.value.trim();
+                if (keyword) {
+                    performSearch(keyword);
+                }
             }
         });
 		
