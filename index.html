@@ -246,8 +246,16 @@
             font-size: 12px;
         }
         .caipiao-special {
-            background-color: #4CAF50;
+            background-color: #4CAF50!important;
         }
+.caipiao-numbers > div:nth-child(-n+4) {
+    background-color: red;
+}
+
+.caipiao-numbers > div:nth-child(n+5) {
+    background-color: gray;
+}
+
         @media (max-width: 600px) {
             .results-container {
                 grid-template-columns: repeat(2, 1fr);
